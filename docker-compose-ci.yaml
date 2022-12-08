@@ -1,0 +1,45 @@
+version: "3.7"
+services:
+  # nginx service
+  web:
+    container_name: "web"
+    image: nginx:alpine
+    depends_on:
+      - app
+    ports:
+      - "8082:80"
+    volumes:
+      - ./app/conf.d:/etc/nginx/conf.d
+    networks:
+      - custom
+
+  # Fastapi service
+  app:
+    container_name: "app"
+    command: uvicorn main:app --host 0.0.0.0
+    image: app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/home/vasilisk/pysondb/server_db.json:rw
+    networks:
+      - custom
+
+  grpc:
+    container_name: "grpc"
+    command: python3 grpcapi_server.py
+    image: grpc
+    ports:
+      - "50051:50051"
+    volumes:
+      - .:/home/vasilisk/pysondb/db.json:rw
+      - .:/home/vasilisk/pysondb/server_db.json:rw
+    networks:
+      - custom
+
+networks:
+  custom:
+    driver: bridge
